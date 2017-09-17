@@ -20,7 +20,11 @@ dodefine(Tokenrow *trp)
 	}
 	np = lookup(tp, 1);
 	if (np->flag&ISUNCHANGE) {
+	 #if 1 /*@@@*/
+		error(WARNING, "#defined token %t can't be redefined", tp);
+	 #else
 		error(ERROR, "#defined token %t can't be redefined", tp);
+	 #endif
 		return;
 	}
 	/* collect arguments */
