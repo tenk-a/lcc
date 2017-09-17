@@ -23,6 +23,10 @@ int	skipping;
 
 char rcsid[] = "$Revision$ $Date$";
 
+#if 1 /*@@@*/
+static void force_inc_files(Tokenrow *trp);
+#endif
+
 int
 main(int argc, char **argv)
 {
@@ -39,12 +43,34 @@ main(int argc, char **argv)
 	fixlex();
 	iniths();
 	genline();
+  #if 1 /*@@@*/
+	force_inc_files(&tr);
+  #endif
 	process(&tr);
 	flushout();
 	fflush(stderr);
 	exit(nerrs > 0);
 	return 0;
 }
+
+#if 1 /*@@@*/	/* for -i force_include_file */
+static void
+force_inc_files(Tokenrow *trp)
+{
+	int flag = 0;
+	while (forceinc_file_begin()) {
+		genline();
+		process(trp);
+		flushout();
+		incdepth = 0;
+		trp->tp  = trp->lp;
+		forceinc_file_end();
+		flag	 = 1;
+	}
+	if (flag)
+		genline();
+}
+#endif
 
 void
 process(Tokenrow *trp)

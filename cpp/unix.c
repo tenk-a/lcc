@@ -12,6 +12,13 @@ int	Mflag;	/* only print active include files */
 char	*objname; /* "src.$O: " */
 int	Cplusplus = 1;
 
+#if 1 /*@@@*/
+#define NFORCEINC_FILE	32
+static	char		*forceinc_file[NFORCEINC_FILE+1];
+static	unsigned	forceinc_file_size;
+static	unsigned	forceinc_file_cur;
+#endif
+
 void
 setup(int argc, char **argv)
 {
@@ -22,7 +29,11 @@ setup(int argc, char **argv)
 	extern void setup_kwtab(void);
 
 	setup_kwtab();
+  #if 1 /*@@@*/
+	while ((c = getopt(argc, argv, "MNOVv+I:i:D:U:F:lg")) != -1)
+  #else
 	while ((c = getopt(argc, argv, "MNOVv+I:D:U:F:lg")) != -1)
+  #endif
 		switch (c) {
 		case 'N':
 			for (i=0; i<NINCLUDE; i++)
@@ -40,6 +51,12 @@ setup(int argc, char **argv)
 			if (i<0)
 				error(FATAL, "Too many -I directives");
 			break;
+	  #if 1 /*@@@*/
+		case 'i':
+			if (forceinc_file_size < NFORCEINC_FILE)
+				forceinc_file[forceinc_file_size++] = (char*)newstring((uchar*)optarg, strlen(optarg), 0);
+			break;
+	  #endif
 		case 'D':
 		case 'U':
 			setsource("<cmdarg>", NULL, optarg);
@@ -67,11 +84,13 @@ setup(int argc, char **argv)
 	fp = "<stdin>";
 	fd = stdin;
 	if (optind<argc) {
+	 #if 0	/*@@@*/ /* change to push_userinclist(name), pop_userinclist() */
 		if ((fp = strrchr(argv[optind], '/')) != NULL) {
 			int len = fp - argv[optind];
 			dp = (char*)newstring((uchar*)argv[optind], len+1, 0);
 			dp[len] = '\0';
 		}
+	 #endif
 		fp = (char*)newstring((uchar*)argv[optind], strlen(argv[optind]), 0);
 		if ((fd = fopen(fp, "r")) == NULL)
 			error(FATAL, "Can't open input file %s", fp);
@@ -88,6 +107,29 @@ setup(int argc, char **argv)
 	setsource(fp, fd, NULL);
 }
 
+
+#if 1 /*@@@*/
+int
+forceinc_file_begin(void)
+{
+	char* fp = forceinc_file[ forceinc_file_cur ];
+	if (fp) {
+		FILE *fd;
+		if ((fd = fopen(fp, "r")) == NULL) {
+			error(FATAL, "Can't open -i file %s", fp);
+		}
+		setsource(fp, fd, NULL);
+		++forceinc_file_cur;
+	}
+	return fp != 0;
+}
+
+void
+forceinc_file_end(void)
+{
+	unsetsource();
+}
+#endif
 
 
 #ifndef _WIN32	/*#ifndef _MSC_VER		//@@@ */

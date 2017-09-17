@@ -24,6 +24,9 @@ struct list {		/* circular list nodes: */
 
 /*@@@ static*/ void *alloc(int);
 static List append(char *,List);
+#ifdef WIN32 /*@@@*/
+static List append_inc(char *,List);
+#endif
 extern char *basepath(char *);
 static int callsys(char *[]);
 extern char *concat(char *, char *);
@@ -42,6 +45,9 @@ static void opt(char *);
 static List path2list(const char *);
 extern int main(int, char *[]);
 extern char *replace(const char *, int, int);
+#if 1 /*@@@*/
+char		*replace_direct(char *, int, int);
+#endif
 static void rm(List);
 extern char *strsave(const char *);
 extern char *stringf(const char *, ...);
@@ -57,6 +63,14 @@ extern int getpid(void);
 
 extern char *cpp[], *include[], *com[], *as[],*ld[], inputs[], *suffixes[];
 extern int option(char *);
+
+#if !defined(WIN32)
+  #define	WIN32_REPLACE_DIRSEP(p)		(p)
+#elif defined(_MSC_VER) || defined(__LCC_WITH_VC__)
+  #define	WIN32_REPLACE_DIRSEP(p)		replace_direct((p), '\\', '/')
+#else
+  #define	WIN32_REPLACE_DIRSEP(p)		replace_direct((p), '/', '\\')
+#endif
 
 static int errcnt;		/* number of errors */
 static int Eflag;		/* -E specified */
@@ -145,6 +159,9 @@ int main(int argc, char *argv[]) {
 			continue;
 		} else if (*argv[i] != '-' && suffix(argv[i], suffixes, 3) >= 0)
 			nf++;
+	  #ifdef WIN32 //@@@
+		WIN32_REPLACE_DIRSEP(argv[i]);
+	  #endif
 		argv[j++] = argv[i];
 	}
 	if ((cflag || Sflag) && outfile && nf != 1) {
@@ -152,8 +169,13 @@ int main(int argc, char *argv[]) {
 		outfile = 0;
 	}
 	argv[j] = 0;
-	for (i = 0; include[i]; i++)
+	for (i = 0; include[i]; i++) {
+	  #ifdef WIN32 //@@@
+		plist = append_inc(include[i], plist);
+	  #else
 		plist = append(include[i], plist);
+	  #endif
+	}
 	if (ilist) {
 		List b = ilist;
 		do {
@@ -174,6 +196,9 @@ int main(int argc, char *argv[]) {
 				if (strcmp(name, argv[i]) != 0
 				|| nf > 1 && suffix(name, suffixes, 3) >= 0)
 					fprintf(stderr, "%s:\n", name);
+			  #ifdef WIN32 /*@@@*/
+				WIN32_REPLACE_DIRSEP(name);
+			  #endif
 				filename(name, 0);
 			} else
 				error("can't find `%s'", argv[i]);
@@ -195,8 +220,16 @@ void *alloc(int n) {
 	
 	n = (n + sizeof(char *) - 1)&~(sizeof(char *) - 1);
 	if (n >= limit - avail) {
-		avail = malloc(n + 4*1024);
+	  #if 1 /*@@@*/
+		avail = (char*)calloc(1, n + 4*1024);
+		if (avail == NULL) {
+			fprintf(stderr, "not enough memory.\n");
+			exit(1);
+		}
+	  #else
+		avail = (char*)malloc(n + 4*1024);
 		assert(avail);
+	  #endif
 		limit = avail + n + 4*1024;
 	}
 	avail += n;
@@ -215,6 +248,14 @@ static List append(char *str, List list) {
 		p->link = p;
 	return p;
 }
+
+#ifdef WIN32 /*@@@*/
+/* append_inc - append() for include list. (replace $0) */
+static List append_inc(char *str, List list) {
+	WIN32_REPLACE_DIRSEP(str);
+	return append(str, list);
+}
+#endif
 
 /* basepath - return base name for name, e.g. /usr/drh/foo.c => foo */
 char *basepath(char *name) {
@@ -280,7 +321,14 @@ static int callsys(char **av) {
 			argv = (char**) malloc(argc*sizeof *argv);
 		else
 			argv = (char**) realloc(argv, argc*sizeof *argv);
+	  #if 1 /*@@@*/
+		if (argv == NULL) {
+			fprintf(stderr, "not enough memory.\n");
+			exit(1);
+		}
+	  #else
 		assert(argv);
+	  #endif
 	}
 	for (i = 0; status == 0 && av[i] != NULL; ) {
 		int j = 0;
@@ -303,8 +351,13 @@ static int callsys(char **av) {
 				fprintf(stderr, " %s", argv[k]);
 			fprintf(stderr, "\n");
 		}
-		if (verbose < 2)
+		if (verbose < 2) {
+		 #if defined(WIN32) && !defined(__LCC_WITH_VC__) && !defined(__LCC_WITH_DMC__)	/*@@@*/
+			status = _spawnvp(_P_WAIT, argv[0], argv);
+		 #else
 			status = _spawnvp(_P_WAIT, argv[0], (const char * const *)argv);
+		 #endif
+		}
 		if (status == -1) {
 			fprintf(stderr, "%s: ", progname);
 			perror(argv[0]);
@@ -514,6 +567,9 @@ static void help(void) {
 "-g	produce symbol table information for debuggers\n",
 "-help or -?	print this message on standard error\n",
 "-Idir	add `dir' to the beginning of the list of #include directories\n",	
+#if 1 /*@@@*/
+"-iFILE	force pre include 'FILE'\n",
+#endif
 "-lx	search library `x'\n",
 "-M	emit makefile dependencies; implies -E\n",
 "-N	do not search the standard directories for #include files\n",
@@ -543,7 +599,12 @@ static void help(void) {
 		if (strncmp("-tempdir", msgs[i], 8) == 0 && tempdir)
 			fprintf(stderr, "; default=%s", tempdir);
 	}
+#if 1 /*@@@*/
+	fprintf(stderr, "\n");
+#define xx(v) if ((s = getenv(#v))) fprintf(stderr, "%s=%s\n", #v, s)
+#else
 #define xx(v) if (s = getenv(#v)) fprintf(stderr, #v "=%s\n", s)
+#endif
 	xx(LCCINPUTS);
 	xx(LCCDIR);
 #ifdef WIN32
@@ -576,11 +637,17 @@ static void initinputs(void) {
 #ifdef WIN32
 	if (list = b = path2list(getenv("include")))
 		do {
-			int n;
 			b = b->link;
-			n = strlen(b->str);
-			if (b->str[n-1] == '\\')
-				b->str[n-1] = '/';
+		  #if 1 /*@@@*/
+			WIN32_REPLACE_DIRSEP(b->str);
+		  #else
+			{
+				int n;
+				n = strlen(b->str);
+				if (b->str[n-1] == '\\')
+					b->str[n-1] = '/';
+			}
+		  #endif
 			ilist = append(stringf("-I\"%s\"", b->str), ilist);
 		} while (b != list);
 #endif
@@ -651,9 +718,15 @@ xx(unsigned_int,4)
 		else
 			fprintf(stderr, "%s: %s ignored\n", progname, arg);
 		return;
+	case 'I':	/* -Idir */
+  #if 1 /*@@@*/
+	case 'i':	/* -ifile */
+	  #ifdef WIN32
+		WIN32_REPLACE_DIRSEP(arg);
+	  #endif
+  #endif
 	case 'D':	/* -Dname -Dname=def */
 	case 'U':	/* -Uname */
-	case 'I':	/* -Idir */
 		plist = append(arg, plist);
 		return;
 	case 'B':	/* -Bdir -Bstatic -Bdynamic */
@@ -677,11 +750,13 @@ xx(unsigned_int,4)
 		return;
 	case 'h':
 		if (strcmp(arg, "-help") == 0) {
-			static int printed = 0;
 	case '?':
-			if (!printed)
-				help();
-			printed = 1;
+			{
+				static int printed = 0;
+				if (!printed)
+					help();
+				printed = 1;
+			}
 			return;
 		}
 		break;
@@ -763,6 +838,9 @@ static List path2list(const char *path) {
 			assert(p - path < sizeof buf);
 			strncpy(buf, path, p - path);
 			buf[p-path] = '\0';
+		  #ifdef WIN32	/*@@@*/
+			WIN32_REPLACE_DIRSEP(buf);
+		  #endif
 		} else {
 			assert(strlen(path) < sizeof buf);
 			strcpy(buf, path);
@@ -772,18 +850,36 @@ static List path2list(const char *path) {
 		if (p == 0)
 			break;
 		path = p + 1;
+	  #if 1	/*@@@*/
+		while (*path && *path <= 0x20)
+			++path;
+	  #endif
 	}
 	return list;
 }
 
 /* replace - copy str, then replace occurrences of from with to, return the copy */
 char *replace(const char *str, int from, int to) {
+ #if 1 /*@@@*/
+	return replace_direct( strsave(str), from, to );
+ #else
 	char *s = strsave(str), *p = s;
 
 	for ( ; (p = strchr(p, from)) != NULL; p++)
 		*p = to;
 	return s;
+ #endif
 }
+
+#if 1 /*@@@*/
+char *replace_direct(char *s, int from, int to) {
+	char *p = s;
+
+	for ( ; (p = strchr(p, from)) != NULL; ++p)
+		*p = to;
+	return s;
+}
+#endif
 
 /* rm - remove files in list */
 static void rm(List list) {
@@ -841,10 +937,15 @@ int suffix(char *name, char *tails[], int n) {
 /* tempname - generate a temporary file name in tempdir with given suffix */
 char *tempname(char *suffix) {
 	static int n;
+  #ifdef WIN32 /*@@@*/
+	char *name = stringf("%s\\lcc%d%d%s", tempdir, getpid(), n++, suffix);
+	WIN32_REPLACE_DIRSEP(name);
+  #elif 0 /* */
 	char *name = stringf("%s/lcc%d%d%s", tempdir, getpid(), n++, suffix);
 
 	if (strstr(com[1], "win32") != NULL)
 		name = replace(name, '/', '\\');
+  #endif
 	rmlist = append(name, rmlist);
 	return name;
 }

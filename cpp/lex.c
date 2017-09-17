@@ -564,6 +564,11 @@ setsource(char *name, FILE *fd, char *str)
 	}
 	s->inl = s->inp+len;
 	s->inl[0] = s->inl[1] = EOB;
+
+ #if 1 /*@@@*/
+	push_userinclist(name);
+ #endif
+
 	return s;
 }
 
@@ -572,6 +577,9 @@ unsetsource(void)
 {
 	Source *s = cursource;
 
+ #if 1 /*@@@*/
+	pop_userinclist();
+ #endif
 	if (s->fd != NULL) {
 		fclose(s->fd);
 		dofree(s->inb);

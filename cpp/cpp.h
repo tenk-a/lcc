@@ -146,6 +146,12 @@ int	unionhideset(int, int);
 void	iniths(void);
 void	setobjname(char *);
 #define	rowlen(tokrow)	((tokrow)->lp - (tokrow)->bp)
+#if 1 /*@@@*/
+int 	forceinc_file_begin(void);
+void	forceinc_file_end(void);
+void	push_userinclist(const char* fname);
+void	pop_userinclist(void);
+#endif
 
 extern	char *out_p;
 extern	Token	nltoken;

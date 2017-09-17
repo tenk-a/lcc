@@ -10,6 +10,15 @@ Includelist	includelist[NINCLUDE];
 
 extern char	*objname;
 
+#if 1 /*@@@*/
+static Includelist	userinclist[NINCLUDE];
+static int			userincOfs = NINCLUDE;
+#endif
+
+#if 1 /*@@@*/
+static int add_dir_file(char* path, unsigned size, const char* dir, const char* fname);
+#endif
+
 void
 doinclude(Tokenrow *trp)
 {
@@ -53,20 +62,48 @@ doinclude(Tokenrow *trp)
 	if (trp->tp < trp->lp || len==0)
 		goto syntax;
 	fname[len] = '\0';
-	if (fname[0]=='/') {
+	if (fname[0]=='/'
+	 #ifdef WIN32	/*@@@*/
+		|| fname[0] == '\\' || (isalpha(fname[0]) && fname[1] == ':')
+	 #endif
+	) {
 		fd = fopen(fname, "r");
 		strcpy(iname, fname);
-	} else for (fd = NULL,i=NINCLUDE-1; i>=0; i--) {
-		ip = &includelist[i];
-		if (ip->file==NULL || ip->deleted || (angled && ip->always==0))
-			continue;
-		if (strlen(fname)+strlen(ip->file)+2 > sizeof(iname))
-			continue;
-		strcpy(iname, ip->file);
-		strcat(iname, "/");
-		strcat(iname, fname);
-		if ((fd = fopen(iname, "r")) != NULL)
-			break;
+	} else {
+	 #if 1	/*@@@*/
+		fd = NULL;
+		if (!angled) {
+			for (i = userincOfs; i < NINCLUDE; ++i) {
+				ip = &userinclist[i];
+				if (ip->file) {
+					if (add_dir_file(iname, PATH_BUF_SIZE, ip->file, fname))
+						fd = fopen(iname, "r");
+					break;
+				}
+			}
+		}
+		if (!fd)
+	 #endif
+		{
+			for (fd=NULL,i=NINCLUDE-1; i>=0; i--) {
+				ip = &includelist[i];
+				if (ip->file==NULL || ip->deleted || (angled && ip->always==0))
+					continue;
+			  #if 1	/*@@@*/
+				if (add_dir_file(iname, PATH_BUF_SIZE, ip->file, fname) == 0)
+					continue;
+			  #else
+				if (strlen(fname)+strlen(ip->file)+2 > sizeof(iname))
+					continue;
+				strcpy(iname, ip->file);
+				strcat(iname, "/");
+				strcat(iname, fname);
+			  #endif
+				if ((fd = fopen(iname, "r")) != NULL) {
+					break;
+				}
+			}
+		}
 	}
 	if ( Mflag>1 || !angled&&Mflag==1 ) {
 		fwrite(objname,1,strlen(objname),stdout);
@@ -124,3 +161,140 @@ setobjname(char *f)
 		strcpy(objname+n,"$O: ");
 	}
 }
+
+#if 1	/*@@@*/
+
+static char* get_basename(const char* name)
+{
+	const char *p = name;
+	while (*p != '\0') {
+	 #ifdef _WIN32
+		if (*p == '/' || *p == '\\' || *p == ':')
+	 #else
+		if (*p == '/')
+	 #endif
+			name = p + 1;
+		++p;
+	}
+	return (char*)name;
+}
+
+void push_userinclist(const char* fname)
+{
+	Includelist *u;
+	unsigned	l;
+	if (userincOfs <= 0)
+		error(FATAL, "#include too deeply nested");
+	--userincOfs;
+	u = &userinclist[userincOfs];
+	u->always = 0;
+	u->file   = NULL;
+	if (fname && fname[0] && fname[0] != '<') {
+		char *b;
+		l = strlen(fname);
+		if ((b = get_basename(fname)) != fname) {
+			l = b - fname;
+		}
+		u->file = (char*)newstring((uchar*)fname, l, 0);
+	}
+}
+
+void pop_userinclist(void)
+{
+	Includelist *u;
+	if (userincOfs < NINCLUDE) {
+		u = &userinclist[userincOfs];
+		if (u->file)
+			dofree(u->file);
+		u->always = 0;
+		u->file = NULL;
+		++userincOfs;
+	}
+}
+
+#endif
+
+#if 1	/*@@@*/
+
+static int
+add_dir_file(char* path, unsigned size, const char* dir, const char* fname)
+{
+ #ifdef WIN32
+	char   buf[PATH_BUF_SIZE+1];
+	size_t l = strlen(dir);
+	size_t n = strlen(fname);
+	if (l+n+2 >= PATH_BUF_SIZE)
+		return 0;
+	memcpy(buf, dir, l);
+	buf[l++] = '/';
+	buf[l]	 = 0;
+	memcpy(buf+l, fname, n+1);
+	_fullpath(path, buf, size);
+	path[size-1] = 0;
+	return 1;
+ #elif defined __linux__ || defined __GLIBC__
+	char	buf[PATH_BUF_SIZE+1];
+	char	*p;
+	size_t l = strlen(dir);
+	size_t n = strlen(fname);
+	if (l+n+2 >= PATH_BUF_SIZE)
+		return 0;
+	memcpy(buf, dir, l);
+	buf[l++] = '/';
+	memcpy(buf+l, fname, n+1);
+	p = realpath(NULL, buf);
+	strncpy(path, p, size);
+	free(p);
+	path[size-1] = '\0';
+	return 1;
+ #else	/* tenuki */
+	const char	*s = fname;
+	char		*t;
+	char		*p;
+	size_t		n;
+	size_t		l = strlen(dir);
+	if (l > 0 && dir[l-1] == '/')
+		--l;
+	t = memcpy(path, dir, l);
+	t[l] = 0;
+	for (;;) {
+		if (strncmp(t, "./", 2) == 0)
+			t+= 2;
+		/*else if (strncmp(t, "../", 3) == 0)
+			t+= 3;*/
+		else
+			break;
+	}
+	for (;;) {
+		if (strncmp(s, "./", 2) == 0) {
+			s += 2;
+			continue;
+		}
+		if (strncmp(s, "../", 3) == 0) {
+			s += 3;
+			p = strrchr(t, '/');
+			if (p <= t)
+				goto ERR;
+			*p = '\0';
+			continue;
+		}
+		break;
+	}
+	l = strlen(path);
+	if (l + 1 >= size)
+		goto ERR;
+	path[l++] = '/';
+	path[l]   = 0;
+	n = strlen(s);
+	if (l+n >= size)
+		goto ERR;
+	memcpy(path+l, s, n+1);
+	return 1;
+
+  ERR:
+	path[0] = 0;
+	return 0;
+ #endif
+}
+
+#endif
