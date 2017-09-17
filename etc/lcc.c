@@ -203,7 +203,7 @@ static void *alloc(int n) {
 
 /* append - append a node with string str onto list, return new list */	
 static List append(char *str, List list) {
-	List p = alloc(sizeof *p);
+	List p = (List)alloc(sizeof *p);
 
 	p->str = str;
 	if (list) {
@@ -275,14 +275,14 @@ static int callsys(char **av) {
 	if (i + 1 > argc) {
 		argc = i + 1;
 		if (argv == NULL)
-			argv = malloc(argc*sizeof *argv);
+			argv = (char**) malloc(argc*sizeof *argv);
 		else
-			argv = realloc(argv, argc*sizeof *argv);
+			argv = (char**) realloc(argv, argc*sizeof *argv);
 		assert(argv);
 	}
 	for (i = 0; status == 0 && av[i] != NULL; ) {
 		int j = 0;
-		char *s;
+		char *s = 0;
 		for ( ; av[i] != NULL && (s = strchr(av[i], '\n')) == NULL; i++)
 			argv[j++] = av[i];
 		if (s != NULL) {
@@ -314,7 +314,7 @@ static int callsys(char **av) {
 /* concat - return concatenation of strings s1 and s2 */
 char *concat(char *s1, char *s2) {
 	int n = strlen(s1);
-	char *s = alloc(n + strlen(s2) + 1);
+	char *s = (char*) alloc(n + strlen(s2) + 1);
 
 	strcpy(s, s1);
 	strcpy(s + n, s2);
@@ -790,7 +790,7 @@ static void rm(List list) {
 
 /* strsave - return a saved copy of string str */
 char *strsave(const char *str) {
-	return strcpy(alloc(strlen(str)+1), str);
+	return strcpy((char*)alloc(strlen(str)+1), str);
 }
 
 /* stringf - format and return a string */
