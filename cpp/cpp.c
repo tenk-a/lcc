@@ -7,7 +7,7 @@
 
 #define	OUTS	16384
 char	outbuf[OUTS];
-char	*outp = outbuf;
+char	*out_p = outbuf;
 Source	*cursource;
 int	nerrs;
 struct	token nltoken = { NL, 0, 0, 0, 1, (uchar*)"\n" };
@@ -28,7 +28,7 @@ main(int argc, char **argv)
 
 	setbuf(stderr, ebuf);
 	t = time(NULL);
-	curtime = ctime(&t);
+	curtime = (char*)ctime(&t);	/* @@@ cast for vc8,9's header */
 	maketokenrow(3, &tr);
 	expandlex();
 	setup(argc, argv);
@@ -50,7 +50,7 @@ process(Tokenrow *trp)
 	for (;;) {
 		if (trp->tp >= trp->lp) {
 			trp->tp = trp->lp = trp->bp;
-			outp = outbuf;
+			out_p = outbuf;
 			anymacros |= gettokens(trp, 1);
 			trp->tp = trp->bp;
 		}

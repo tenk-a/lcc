@@ -206,7 +206,6 @@ int intexpr(int tok, int n) {
 }
 Tree simplify(int op, Type ty, Tree l, Tree r) {
 	int n;
-	Tree p;
 
 	if (optype(op) == 0)
 		op = mkop(op, ty);
@@ -257,7 +256,7 @@ Tree simplify(int op, Type ty, Tree l, Tree r) {
 			xcvtcnst(F,l->u.v.d,ty,i,(long)l->u.v.d);
 			break;
 		case CVF+F: {
-			float d;
+			float d = 0.f;
 			if (l->op == CNST+F)
 				if (l->u.v.d < ty->u.sym->u.limits.min.d)
 					d = ty->u.sym->u.limits.min.d;

@@ -1080,7 +1080,7 @@ void checklab(Symbol p, void *cl) {
 Type enumdcl(void) {
 	char *tag;
 	Type ty;
-	Symbol p;
+	Symbol p = NULL;
 	Coordinate pos;
 
 	t = gettok();

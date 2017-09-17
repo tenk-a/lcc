@@ -265,7 +265,7 @@ void stabline(Coordinate *cp) {
 
 /* stabsym - output a stab entry for symbol p */
 void stabsym(Symbol p) {
-	int code, tc, sz = p->type->size;
+	int code = 0, tc, sz = p->type->size;
 
 	if (p->generated || p->computed)
 		return;

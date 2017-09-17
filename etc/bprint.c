@@ -83,10 +83,10 @@ int main(int argc, char *argv[]) {
 
 /* alloc - allocate n bytes or die */
 void *alloc(unsigned n) {
-	void *new = malloc(n);
+	void *newp = malloc(n);
 
-	assert(new);
-	return new;
+	assert(newp);
+	return newp;
 }
 
 /* emitdata - write prof.out data to file */

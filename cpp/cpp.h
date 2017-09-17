@@ -142,7 +142,7 @@ void	iniths(void);
 void	setobjname(char *);
 #define	rowlen(tokrow)	((tokrow)->lp - (tokrow)->bp)
 
-extern	char *outp;
+extern	char *out_p;
 extern	Token	nltoken;
 extern	Source *cursource;
 extern	char *curtime;

@@ -750,8 +750,7 @@ static void clobber(Node p) {
 }
 
 static void emit2(Node p) {
-        int dst, n, src, sz, ty;
-        static int ty0;
+        int n, src, sz, ty;
         Symbol q;
 
         switch (specific(p->op)) {
