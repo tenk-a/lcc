@@ -71,7 +71,11 @@ static List rmlist;		/* list of files to remove */
 static char *outfile;		/* ld output file or -[cS] object file */
 static int ac;			/* argument count */
 static char **av;		/* argument vector */
+#if 1	/*@@@*/
+static char *tempdir=NULL;	/* directory for temporary files */
+#else
 char *tempdir = TEMPDIR;	/* directory for temporary files */
+#endif
 static char *progname;
 static List lccinputs;		/* list of input directories */
 
@@ -89,12 +93,23 @@ main(int argc, char *argv[]) {
 	if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
 		signal(SIGHUP, interrupt);
 #endif
+  #if 1	/*@@@*/
+	if (!tempdir)
+		tempdir = getenv("TMP");
+	if (!tempdir)
+		tempdir = getenv("TEMP");
+	if (!tempdir)
+		tempdir = getenv("TMPDIR");
+	if (!tempdir)
+		tempdir = TEMPDIR;
+  #else
 	if (getenv("TMP"))
 		tempdir = getenv("TMP");
 	else if (getenv("TEMP"))
 		tempdir = getenv("TEMP");
 	else if (getenv("TMPDIR"))
 		tempdir = getenv("TMPDIR");
+  #endif
 	assert(tempdir);
 	i = strlen(tempdir);
 	for (; i > 0 && tempdir[i-1] == '/' || tempdir[i-1] == '\\'; i--)
