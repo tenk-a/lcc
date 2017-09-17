@@ -138,6 +138,10 @@ expandrow(Tokenrow *trp, char *flag)
 {
 	Token *tp;
 	Nlist *np = NULL;
+  #if 1 /*@@@*/
+	Token *lp;
+	int   chkcount=0;
+  #endif
 
 	if (flag)
 		setsource(flag, NULL, "");
@@ -151,11 +155,12 @@ expandrow(Tokenrow *trp, char *flag)
 			continue;
 		}
 		trp->tp = tp;
+		lp = trp->lp;	/*@@@*/
 		if (np->val==KDEFINED) {
 			tp->type = DEFINED;
-			if ((tp+1)<trp->lp && (tp+1)->type==NAME)
+			if ((tp+1)<lp && (tp+1)->type==NAME)
 				(tp+1)->type = NAME1;
-			else if ((tp+3)<trp->lp && (tp+1)->type==LP
+			else if ((tp+3)<lp && (tp+1)->type==LP
 			 && (tp+2)->type==NAME && (tp+3)->type==RP)
 				(tp+2)->type = NAME1;
 			else
@@ -168,7 +173,22 @@ expandrow(Tokenrow *trp, char *flag)
 		else {
 			expand(trp, np);
 		}
+	  #if 1 /*@@@*/
+		if (tp == trp->tp && lp == trp->lp && tp < lp) {
+			if (++chkcount >= 100) {
+				++tp;
+			 #if 0
+				error(WARNING, "Internal CPP Error. %s", flag ? flag : "");
+			 #endif
+				chkcount = 0;
+			}
+		} else {
+			tp = trp->tp;
+			chkcount = 0;
+		}
+	  #else
 		tp = trp->tp;
+	  #endif
 	}
 	if (flag)
 		unsetsource();

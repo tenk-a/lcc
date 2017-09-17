@@ -103,13 +103,16 @@ control(Tokenrow *trp)
 			error(ERROR, "Unidentifiable control line");
 		return;			/* else empty line */
 	}
-	if ((np = lookup(tp, 0))==NULL || (np->flag&ISKW)==0 && !skipping) {
-		error(WARNING, "Unknown preprocessor control %t", tp);
+	if ((np = lookup(tp, 0))==NULL || (np->flag&ISKW)==0 /*@@@ && !skipping*/) {
+		if (!skipping)	/*@@@*/
+		    error(WARNING, "Unknown preprocessor control %t", tp);
 		return;
 	}
 	if (skipping) {
+	  #if 0 /*@@@*/
 		if ((np->flag&ISKW)==0)
 			return;
+	  #endif
 		switch (np->val) {
 		case KENDIF:
 			if (--ifdepth<skipping)
@@ -256,7 +259,11 @@ control(Tokenrow *trp)
 void *
 domalloc(int size)
 {
+  #if 1 /*@@@*/
+	void *p = calloc(1, size);
+  #else
 	void *p = malloc(size);
+  #endif
 
 	if (p==NULL)
 		error(FATAL, "Out of memory from malloc");
@@ -304,8 +311,10 @@ error(enum errtype type, char *string, ...)
 			case 'r':
 				trp = va_arg(ap, Tokenrow *);
 				for (tp=trp->tp; tp<trp->lp&&tp->type!=NL; tp++) {
+				  #if 0	/*@@@*/
 					if (tp>trp->tp && tp->wslen)
 						fputc(' ', stderr);
+				  #endif
 					fprintf(stderr, "%.*s", tp->len, tp->t);
 				}
 				break;

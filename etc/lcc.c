@@ -22,7 +22,7 @@ struct list {		/* circular list nodes: */
 	List link;		/* next list element */
 };
 
-static void *alloc(int);
+/*@@@ static*/ void *alloc(int);
 static List append(char *,List);
 extern char *basepath(char *);
 static int callsys(char *[]);
@@ -36,6 +36,7 @@ static int filename(char *, char *);
 static List find(char *, List);
 static void help(void);
 static void initinputs(void);
+#undef interrupt
 static void interrupt(int);
 static void opt(char *);
 static List path2list(const char *);
@@ -79,7 +80,7 @@ char *tempdir = TEMPDIR;	/* directory for temporary files */
 static char *progname;
 static List lccinputs;		/* list of input directories */
 
-main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 	int i, j, nf;
 	
 	progname = argv[0];
@@ -188,7 +189,8 @@ main(int argc, char *argv[]) {
 }
 
 /* alloc - allocate n bytes or die */
-static void *alloc(int n) {
+/*static */ /*@@@ remove 'static' for win32.c */
+void *alloc(int n) {
 	static char *avail, *limit;
 	
 	n = (n + sizeof(char *) - 1)&~(sizeof(char *) - 1);
@@ -426,6 +428,10 @@ static int filename(char *name, char *base) {
 		status = callsys(av);
 		if (status == 0)
 			return filename(itemp, base);
+	  #if 1	/*@@@*/
+		else
+			fprintf(stderr, "error: cpp failed.\n");
+	  #endif
 		break;
 	case 1:	/* preprocessed source files */
 		if (Eflag)
@@ -434,6 +440,10 @@ static int filename(char *name, char *base) {
 			status = compile(name, outfile ? outfile : concat(base, first(suffixes[2])));
 		else if ((status = compile(name, stemp?stemp:(stemp=tempname(first(suffixes[2]))))) == 0)
 			return filename(stemp, base);
+	  #if 1	/*@@@*/
+		if (status)
+			fprintf(stderr, "error: compiler failed.\n");
+	  #endif
 		break;
 	case 2:	/* assembly language files */
 		if (Eflag)
@@ -450,6 +460,10 @@ static int filename(char *name, char *base) {
 			status = callsys(av);
 			if (!find(ofile, llist[1]))
 				llist[1] = append(ofile, llist[1]);
+		  #if 1	/*@@@*/
+			if (status)
+				fprintf(stderr, "error: assember failed.\n");
+		  #endif
 		}
 		break;
 	case 3:	/* object files */
@@ -575,7 +589,7 @@ static void initinputs(void) {
 /* interrupt - catch interrupt signals */
 static void interrupt(int n) {
 	rm(rmlist);
-	exit(n = 100);
+	exit(100);
 }
 
 /* opt - process option in arg */
@@ -741,11 +755,11 @@ static List path2list(const char *path) {
 
 	if (path == NULL)
 		return NULL;
-	if (strchr(path, ';'))
+	if (strchr((char*)path, ';'))		/*@@@ cast for dmc's header */
 		sep = ';';
 	while (*path) {
 		char *p, buf[512];
-		if (p = strchr(path, sep)) {
+		if ((p = (char*) strchr((char*)path, sep))) {	/*@@@ cast for dmc's header */
 			assert(p - path < sizeof buf);
 			strncpy(buf, path, p - path);
 			buf[p-path] = '\0';
