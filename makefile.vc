@@ -1,0 +1,430 @@
+# makefile.nt  modified 2011/07/02
+
+# VC Setting VC8,VC9 or VC10 -- for generate lcc.cfg --------------------------
+#VCDIR=C:\Program Files (x86)\Microsoft Visual Studio 8\VC
+VCDIR=C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC
+#VCDIR=C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC
+#VCDIR=C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC
+CCLIBTYPE=-MT
+CCLIBTYPELIB=libcmt.lib
+#CCLIBTYPE=-MD
+#CCLIBTYPELIB=msvcrt.lib
+# -----------------------------------------------------------------------------
+HOSTFILE=etc/win32.c
+TARGET=x86\win32
+# PROJECTDIR=c:\lcc
+PROJECTDIR=.
+BINDIR=$(PROJECTDIR)\bin\ 
+LIBDIR=$(PROJECTDIR)\lib\ 
+BUILDDIR=$(PROJECTDIR)\bld
+TSTDIR=$(TARGET)\tst
+TEMPDIR=/tmp
+P=$(PROJECTDIR)^\ 
+B=$(BUILDDIR)^\ 
+T=$(TSTDIR)^\ 
+A=.lib
+O=.obj
+E=.exe
+CC=cl -nologo
+CCFO=-Fo
+CFLAGS=$(CCLIBTYPE) -DWIN32 -Zi -Fd$(B) -W4 -wd4996 -wd4244 -wd4100 -wd4127
+LD=cl -nologo
+LDFO=-Fe
+# LDFLAGS=$(CCLIBTYPE) -DWIN32 -Zi -Fd$(B) -W4
+LDFLAGS=$(CCLIBTYPE) -DWIN32 -Fd$(B) -W4
+AR=lib
+ARFO=-OUT:
+ARFLAGS=
+
+# C=$(BINDIR)lcc$(E) -Wo-lccdir=$(PROJECTDIR) -Wf-target=$(TARGET) -Iinclude\$(TARGET)
+C=$(BINDIR)lcc$(E) -Wf-target=$(TARGET) -Iinclude\$(TARGET) -v
+
+what:
+	-@echo make all rcc lburg cpp lcc bprint liblcc triple clean clobber
+
+all::	$(BUILDDIR) rcc lburg cpp lcc $(BINDIR)lcc.cfg bprint liblcc
+
+rcc:	$(BINDIR)rcc$(E)
+lburg:	$(BINDIR)lburg$(E)
+cpp:	$(BINDIR)cpp$(E)
+lcc:	$(BINDIR)lcc$(E)
+bprint:	$(BINDIR)bprint$(E)
+liblcc:	$(LIBDIR)liblcc$(A)
+
+$(BUILDDIR):
+	-md $(BUILDDIR)
+
+$(BINDIR)lcc.cfg: $(BINDIR)rcc$(E) $(BINDIR)cpp$(E) $(BINDIR)lcc$(E)
+	echo	cpp=$$0\cpp -i$$0\..\include\x86\Win32\_lcc_with_vc.h $$1 $$2 $$3	>$(BINDIR)lcc.cfg
+	echo	inc=-I$$0\..\include\x86\win32 -I"$(VCDIR)\include"	>>$(BINDIR)lcc.cfg
+	echo	com=$$0\rcc.exe -target=x86/win32 $$1 $$2 $$3	>>$(BINDIR)lcc.cfg
+	echo	asm=ml.exe -nologo -c -Cp -coff -Fo$$3 $$1 $$2	>>$(BINDIR)lcc.cfg
+	echo	lnk=link.exe -nologo -nodefaultlib -subsystem:console -entry:mainCRTStartup $$2 -OUT:$$3 $$1 $$0\..\lib\liblcc.lib $(CCLIBTYPELIB) oldnames.lib kernel32.lib user32.lib	>>$(BINDIR)lcc.cfg
+
+RCCOBJS=$(B)alloc$(O) \
+	$(B)bind$(O) \
+	$(B)dag$(O) \
+	$(B)dagcheck$(O) \
+	$(B)decl$(O) \
+	$(B)enode$(O) \
+	$(B)error$(O) \
+	$(B)expr$(O) \
+	$(B)event$(O) \
+	$(B)init$(O) \
+	$(B)inits$(O) \
+	$(B)input$(O) \
+	$(B)lex$(O) \
+	$(B)list$(O) \
+	$(B)main$(O) \
+	$(B)output$(O) \
+	$(B)prof$(O) \
+	$(B)profio$(O) \
+	$(B)simp$(O) \
+	$(B)stmt$(O) \
+	$(B)string$(O) \
+	$(B)sym$(O) \
+	$(B)trace$(O) \
+	$(B)tree$(O) \
+	$(B)types$(O) \
+	$(B)null$(O) \
+	$(B)symbolic$(O) \
+	$(B)gen$(O) \
+	$(B)bytecode$(O) \
+	$(B)alpha$(O) \
+	$(B)mips$(O) \
+	$(B)sparc$(O) \
+	$(B)stab$(O) \
+	$(B)x86$(O) \
+	$(B)x86linux$(O)
+
+$(BINDIR)rcc$(E)::	$(B)main$(O) $(B)librcc$(A) $(EXTRAOBJS)
+		$(LD) $(LDFLAGS) $(LDFO)$@ $(B)main$(O) $(EXTRAOBJS) $(B)librcc$(A) $(EXTRALIBS)
+
+$(B)librcc$(A):	$(RCCOBJS)
+		$(AR) $(ARFLAGS) $(ARFO)$@ $(RCCOBJS)
+
+$(RCCOBJS):	$(P)src/c.h $(P)src/ops.h $(P)src/token.h $(P)src/config.h
+
+$(B)alloc$(O):		$(P)src/alloc.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/alloc.c
+$(B)bind$(O):		$(P)src/bind.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/bind.c
+$(B)dag$(O):		$(P)src/dag.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/dag.c
+$(B)decl$(O):		$(P)src/decl.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/decl.c
+$(B)enode$(O):		$(P)src/enode.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/enode.c
+$(B)error$(O):		$(P)src/error.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/error.c
+$(B)event$(O):		$(P)src/event.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/event.c
+$(B)expr$(O):		$(P)src/expr.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/expr.c
+$(B)gen$(O):		$(P)src/gen.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/gen.c
+$(B)init$(O):		$(P)src/init.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/init.c
+$(B)inits$(O):		$(P)src/inits.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/inits.c
+$(B)input$(O):		$(P)src/input.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/input.c
+$(B)lex$(O):		$(P)src/lex.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/lex.c
+$(B)list$(O):		$(P)src/list.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/list.c
+$(B)main$(O):		$(P)src/main.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/main.c
+$(B)null$(O):		$(P)src/null.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/null.c
+$(B)output$(O):		$(P)src/output.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/output.c
+$(B)prof$(O):		$(P)src/prof.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/prof.c
+$(B)profio$(O):		$(P)src/profio.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/profio.c
+$(B)simp$(O):		$(P)src/simp.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/simp.c
+$(B)stmt$(O):		$(P)src/stmt.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/stmt.c
+$(B)string$(O):		$(P)src/string.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/string.c
+$(B)sym$(O):		$(P)src/sym.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/sym.c
+$(B)symbolic$(O):	$(P)src/symbolic.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/symbolic.c
+$(B)bytecode$(O):	$(P)src/bytecode.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/bytecode.c
+$(B)trace$(O):		$(P)src/trace.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/trace.c
+$(B)tree$(O):		$(P)src/tree.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/tree.c
+$(B)types$(O):		$(P)src/types.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/types.c
+$(B)stab$(O):		$(P)src/stab.c $(P)src/stab.h; $(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)src/stab.c
+
+$(B)dagcheck$(O):	$(B)dagcheck.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(B)dagcheck.c
+$(B)alpha$(O):		$(B)alpha.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(B)alpha.c
+$(B)mips$(O):		$(B)mips.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(B)mips.c
+$(B)sparc$(O):		$(B)sparc.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(B)sparc.c
+$(B)x86$(O):		$(B)x86.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(B)x86.c
+$(B)x86linux$(O):	$(B)x86linux.c;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(B)x86linux.c
+
+$(B)dagcheck.c:		$(BINDIR)lburg$(E) $(P)src/dagcheck.md ; $(BINDIR)lburg$(E) $(P)src/dagcheck.md $@
+$(B)alpha.c:		$(BINDIR)lburg$(E) $(P)src/alpha.md ;    $(BINDIR)lburg$(E) $(P)src/alpha.md    $@
+$(B)mips.c:		$(BINDIR)lburg$(E) $(P)src/mips.md ;     $(BINDIR)lburg$(E) $(P)src/mips.md     $@
+$(B)sparc.c:		$(BINDIR)lburg$(E) $(P)src/sparc.md ;    $(BINDIR)lburg$(E) $(P)src/sparc.md    $@
+$(B)x86.c:		$(BINDIR)lburg$(E) $(P)src/x86.md ;      $(BINDIR)lburg$(E) $(P)src/x86.md      $@
+$(B)x86linux.c:		$(BINDIR)lburg$(E) $(P)src/x86linux.md ; $(BINDIR)lburg$(E) $(P)src/x86linux.md $@
+
+$(BINDIR)bprint$(E):	$(B)bprint$(O);		$(LD) $(LDFLAGS) $(LDFO)$@ $(B)bprint$(O) 
+$(BINDIR)ops$(E):	$(B)ops$(O);		$(LD) $(LDFLAGS) $(LDFO)$@ $(B)ops$(O)
+
+$(B)bprint$(O):		$(P)etc/bprint.c $(P)src/profio.c;	$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)etc/bprint.c
+$(B)ops$(O):		$(P)etc/ops.c	 $(P)src/ops.h;		$(CC) $(CFLAGS) -c -I$(P)src $(CCFO)$@ $(P)etc/ops.c
+
+$(BINDIR)lcc$(E):	$(B)lcc$(O) $(B)host$(O);	$(LD) $(LDFLAGS) $(LDFO)$@ $(B)lcc$(O) $(B)host$(O) 
+
+$(B)lcc$(O):		$(P)etc/lcc.c;	$(CC) $(CFLAGS) -c -DTEMPDIR=\"$(TEMPDIR)\" $(CCFO)$@ $(P)etc/lcc.c
+$(B)host$(O):		$(HOSTFILE);	$(CC) $(CFLAGS) -c $(CCFO)$@ $(HOSTFILE)
+
+$(BINDIR)cp$(E):	$(P)etc/cp.c;	$(CC) $(CFLAGS) $(CCFO)$@ $(P)etc/cp.c
+
+LIBOBJS=$(B)assert$(O) $(B)bbexit$(O) $(B)yynull$(O)
+
+$(LIBDIR)liblcc$(A):	$(LIBOBJS);	$(AR) $(ARFLAGS) $(ARFO)$@ $(B)assert$(O) $(B)bbexit$(O) $(B)yynull$(O)
+
+$(B)assert$(O):		$(P)lib/assert.c;	$(CC) -c $(CCFO)$@ $(P)lib/assert.c
+$(B)yynull$(O):		$(P)lib/yynull.c;	$(CC) -c $(CCFO)$@ $(P)lib/yynull.c
+$(B)bbexit$(O):		$(P)lib/bbexit.c;	$(CC) -c $(CCFO)$@ $(P)lib/bbexit.c
+
+$(BINDIR)lburg$(E):	$(B)lburg$(O) $(B)gram$(O);	$(LD) $(LDFLAGS) $(LDFO)$@ $(B)lburg$(O) $(B)gram$(O) 
+
+$(B)lburg$(O) $(B)gram$(O):	$(P)lburg/lburg.h
+
+$(B)lburg$(O):		$(P)lburg/lburg.c;	$(CC) $(CFLAGS) -c -I$(P)lburg $(CCFO)$@ $(P)lburg/lburg.c
+$(B)gram$(O):		$(P)lburg/gram.c;	$(CC) $(CFLAGS) -c -I$(P)lburg $(CCFO)$@ $(P)lburg/gram.c
+
+CPPOBJS=$(B)cpp$(O) $(B)lexer$(O) $(B)nlist$(O) $(B)tokens$(O) $(B)macro$(O) $(B)eval$(O) \
+	$(B)include$(O) $(B)hideset$(O) $(B)getopt$(O) $(B)unix$(O)
+
+$(BINDIR)cpp$(E):	$(CPPOBJS)
+			$(LD) $(LDFLAGS) $(LDFO)$@ $(CPPOBJS) 
+
+$(CPPOBJS):		$(P)cpp/cpp.h
+
+$(B)cpp$(O):		$(P)cpp/cpp.c;		$(CC) $(CFLAGS) -c -Icpp $(CCFO)$@ $(P)cpp/cpp.c
+$(B)lexer$(O):		$(P)cpp/lex.c;		$(CC) $(CFLAGS) -c -Icpp $(CCFO)$@ $(P)cpp/lex.c
+$(B)nlist$(O):		$(P)cpp/nlist.c;	$(CC) $(CFLAGS) -c -Icpp $(CCFO)$@ $(P)cpp/nlist.c
+$(B)tokens$(O):		$(P)cpp/tokens.c;	$(CC) $(CFLAGS) -c -Icpp $(CCFO)$@ $(P)cpp/tokens.c
+$(B)macro$(O):		$(P)cpp/macro.c;	$(CC) $(CFLAGS) -c -Icpp $(CCFO)$@ $(P)cpp/macro.c
+$(B)eval$(O):		$(P)cpp/eval.c;		$(CC) $(CFLAGS) -c -Icpp $(CCFO)$@ $(P)cpp/eval.c
+$(B)include$(O):	$(P)cpp/include.c;	$(CC) $(CFLAGS) -c -Icpp $(CCFO)$@ $(P)cpp/include.c
+$(B)hideset$(O):	$(P)cpp/hideset.c;	$(CC) $(CFLAGS) -c -Icpp $(CCFO)$@ $(P)cpp/hideset.c
+$(B)getopt$(O):		$(P)cpp/getopt.c;	$(CC) $(CFLAGS) -c -Icpp $(CCFO)$@ $(P)cpp/getopt.c
+$(B)unix$(O):		$(P)cpp/unix.c;		$(CC) $(CFLAGS) -c -Icpp $(CCFO)$@ $(P)cpp/unix.c
+
+test:	$(T)8q.s \
+	$(T)array.s \
+	$(T)cf.s \
+	$(T)cq.s \
+	$(T)cvt.s \
+	$(T)fields.s \
+	$(T)front.s \
+	$(T)incr.s \
+	$(T)init.s \
+	$(T)limits.s \
+	$(T)paranoia.s \
+	$(T)sort.s \
+	$(T)spill.s \
+	$(T)stdarg.s \
+	$(T)struct.s \
+	$(T)switch.s \
+	$(T)wf1.s \
+	$(T)yacc.s \
+
+$(T)8q.s:	tst\8q.c tst\8q.0 all
+	-$(C) -S -Wf-errout=$(T)8q.2 -o $(T)8q.s tst/8q.c
+	-fc $(TARGET)\tst\8q.sbk $(T)8q.s
+	fc $(TARGET)\tst\8q.2bk $(T)8q.2
+	$(C) -o $(T)8q$(E) $(T)8q.s
+	-$(T)8q$(E) <tst/8q.0 >$(T)8q.1
+	fc $(TARGET)\tst\8q.1bk $(T)8q.1
+$(T)array.s:	tst\array.c tst\array.0 all
+	-$(C) -S -Wf-errout=$(T)array.2 -o $(T)array.s tst/array.c
+	-fc $(TARGET)\tst\array.sbk $(T)array.s
+	fc $(TARGET)\tst\array.2bk $(T)array.2
+	$(C) -o $(T)array$(E) $(T)array.s
+	-$(T)array$(E) <tst/array.0 >$(T)array.1
+	fc $(TARGET)\tst\array.1bk $(T)array.1
+$(T)cf.s:	tst\cf.c tst\cf.0 all
+	-$(C) -S -Wf-errout=$(T)cf.2 -o $(T)cf.s tst/cf.c
+	-fc $(TARGET)\tst\cf.sbk $(T)cf.s
+	fc $(TARGET)\tst\cf.2bk $(T)cf.2
+	$(C) -o $(T)cf$(E) $(T)cf.s
+	-$(T)cf$(E) <tst/cf.0 >$(T)cf.1
+	fc $(TARGET)\tst\cf.1bk $(T)cf.1
+$(T)cq.s:	tst\cq.c tst\cq.0 all
+	-$(C) -S -Wf-errout=$(T)cq.2 -o $(T)cq.s tst/cq.c
+	-fc $(TARGET)\tst\cq.sbk $(T)cq.s
+	fc $(TARGET)\tst\cq.2bk $(T)cq.2
+	$(C) -o $(T)cq$(E) $(T)cq.s
+	-$(T)cq$(E) <tst/cq.0 >$(T)cq.1
+	fc $(TARGET)\tst\cq.1bk $(T)cq.1
+$(T)cvt.s:	tst\cvt.c tst\cvt.0 all
+	-$(C) -S -Wf-errout=$(T)cvt.2 -o $(T)cvt.s tst/cvt.c
+	-fc $(TARGET)\tst\cvt.sbk $(T)cvt.s
+	fc $(TARGET)\tst\cvt.2bk $(T)cvt.2
+	$(C) -o $(T)cvt$(E) $(T)cvt.s
+	-$(T)cvt$(E) <tst/cvt.0 >$(T)cvt.1
+	fc $(TARGET)\tst\cvt.1bk $(T)cvt.1
+$(T)fields.s:	tst\fields.c tst\fields.0 all
+	-$(C) -S -Wf-errout=$(T)fields.2 -o $(T)fields.s tst/fields.c
+	-fc $(TARGET)\tst\fields.sbk $(T)fields.s
+	fc $(TARGET)\tst\fields.2bk $(T)fields.2
+	$(C) -o $(T)fields$(E) $(T)fields.s
+	-$(T)fields$(E) <tst/fields.0 >$(T)fields.1
+	fc $(TARGET)\tst\fields.1bk $(T)fields.1
+$(T)front.s:	tst\front.c tst\front.0 all
+	-$(C) -S -Wf-errout=$(T)front.2 -o $(T)front.s tst/front.c
+	-fc $(TARGET)\tst\front.sbk $(T)front.s
+	fc $(TARGET)\tst\front.2bk $(T)front.2
+$(T)incr.s:	tst\incr.c tst\incr.0 all
+	-$(C) -S -Wf-errout=$(T)incr.2 -o $(T)incr.s tst/incr.c
+	-fc $(TARGET)\tst\incr.sbk $(T)incr.s
+	fc $(TARGET)\tst\incr.2bk $(T)incr.2
+	$(C) -o $(T)incr$(E) $(T)incr.s
+	-$(T)incr$(E) <tst/incr.0 >$(T)incr.1
+	fc $(TARGET)\tst\incr.1bk $(T)incr.1
+$(T)init.s:	tst\init.c tst\init.0 all
+	-$(C) -S -Wf-errout=$(T)init.2 -o $(T)init.s tst/init.c
+	-fc $(TARGET)\tst\init.sbk $(T)init.s
+	fc $(TARGET)\tst\init.2bk $(T)init.2
+	$(C) -o $(T)init$(E) $(T)init.s
+	-$(T)init$(E) <tst/init.0 >$(T)init.1
+	fc $(TARGET)\tst\init.1bk $(T)init.1
+$(T)limits.s:	tst\limits.c tst\limits.0 all
+	-$(C) -S -Wf-errout=$(T)limits.2 -o $(T)limits.s tst/limits.c
+	-fc $(TARGET)\tst\limits.sbk $(T)limits.s
+	fc $(TARGET)\tst\limits.2bk $(T)limits.2
+	$(C) -o $(T)limits$(E) $(T)limits.s
+	-$(T)limits$(E) <tst/limits.0 >$(T)limits.1
+	fc $(TARGET)\tst\limits.1bk $(T)limits.1
+$(T)paranoia.s:	tst\paranoia.c tst\paranoia.0 all
+	-$(C) -S -Wf-errout=$(T)paranoia.2 -o $(T)paranoia.s tst/paranoia.c
+	-fc $(TARGET)\tst\paranoia.sbk $(T)paranoia.s
+	fc $(TARGET)\tst\paranoia.2bk $(T)paranoia.2
+	$(C) -o $(T)paranoia$(E) $(T)paranoia.s
+	-$(T)paranoia$(E) <tst/paranoia.0 >$(T)paranoia.1
+	fc $(TARGET)\tst\paranoia.1bk $(T)paranoia.1
+$(T)sort.s:	tst\sort.c tst\sort.0 all
+	-$(C) -S -Wf-errout=$(T)sort.2 -o $(T)sort.s tst/sort.c
+	-fc $(TARGET)\tst\sort.sbk $(T)sort.s
+	fc $(TARGET)\tst\sort.2bk $(T)sort.2
+	$(C) -o $(T)sort$(E) $(T)sort.s
+	-$(T)sort$(E) <tst/sort.0 >$(T)sort.1
+	fc $(TARGET)\tst\sort.1bk $(T)sort.1
+$(T)spill.s:	tst\spill.c tst\spill.0 all
+	-$(C) -S -Wf-errout=$(T)spill.2 -o $(T)spill.s tst/spill.c
+	-fc $(TARGET)\tst\spill.sbk $(T)spill.s
+	fc $(TARGET)\tst\spill.2bk $(T)spill.2
+	$(C) -o $(T)spill$(E) $(T)spill.s
+	-$(T)spill$(E) <tst/spill.0 >$(T)spill.1
+	fc $(TARGET)\tst\spill.1bk $(T)spill.1
+$(T)stdarg.s:	tst\stdarg.c tst\stdarg.0 all
+	-$(C) -S -Wf-errout=$(T)stdarg.2 -o $(T)stdarg.s tst/stdarg.c
+	-fc $(TARGET)\tst\stdarg.sbk $(T)stdarg.s
+	fc $(TARGET)\tst\stdarg.2bk $(T)stdarg.2
+	$(C) -o $(T)stdarg$(E) $(T)stdarg.s
+	-$(T)stdarg$(E) <tst/stdarg.0 >$(T)stdarg.1
+	fc $(TARGET)\tst\stdarg.1bk $(T)stdarg.1
+$(T)struct.s:	tst\struct.c tst\struct.0 all
+	-$(C) -S -Wf-errout=$(T)struct.2 -o $(T)struct.s tst/struct.c
+	-fc $(TARGET)\tst\struct.sbk $(T)struct.s
+	-fc $(TARGET)\tst\struct.2bk $(T)struct.2
+	$(C) -o $(T)struct$(E) $(T)struct.s
+	-$(T)struct$(E) <tst/struct.0 >$(T)struct.1
+	fc $(TARGET)\tst\struct.1bk $(T)struct.1
+$(T)switch.s:	tst\switch.c tst\switch.0 all
+	-$(C) -S -Wf-errout=$(T)switch.2 -o $(T)switch.s tst/switch.c
+	-fc $(TARGET)\tst\switch.sbk $(T)switch.s
+	fc $(TARGET)\tst\switch.2bk $(T)switch.2
+	$(C) -o $(T)switch$(E) $(T)switch.s
+	-$(T)switch$(E) <tst/switch.0 >$(T)switch.1
+	fc $(TARGET)\tst\switch.1bk $(T)switch.1
+$(T)wf1.s:	tst\wf1.c tst\wf1.0 all
+	-$(C) -S -Wf-errout=$(T)wf1.2 -o $(T)wf1.s tst/wf1.c
+	-fc $(TARGET)\tst\wf1.sbk $(T)wf1.s
+	fc $(TARGET)\tst\wf1.2bk $(T)wf1.2
+	$(C) -o $(T)wf1$(E) $(T)wf1.s
+	-$(T)wf1$(E) <tst/wf1.0 >$(T)wf1.1
+	fc $(TARGET)\tst\wf1.1bk $(T)wf1.1
+$(T)yacc.s:	tst\yacc.c tst\yacc.0 all
+	-$(C) -S -Wf-errout=$(T)yacc.2 -o $(T)yacc.s tst/yacc.c
+	-fc $(TARGET)\tst\yacc.sbk $(T)yacc.s
+	fc $(TARGET)\tst\yacc.2bk $(T)yacc.2
+	$(C) -o $(T)yacc$(E) $(T)yacc.s
+	-$(T)yacc$(E) <tst/yacc.0 >$(T)yacc.1
+	fc $(TARGET)\tst\yacc.1bk $(T)yacc.1
+
+testclean:
+	-del /q $(T)8q$(E) $(T)8q.s $(T)8q.2 $(T)8q.1
+	-del /q $(T)array$(E) $(T)array.s $(T)array.2 $(T)array.1
+	-del /q $(T)cf$(E) $(T)cf.s $(T)cf.2 $(T)cf.1
+	-del /q $(T)cq$(E) $(T)cq.s $(T)cq.2 $(T)cq.1
+	-del /q $(T)cvt$(E) $(T)cvt.s $(T)cvt.2 $(T)cvt.1
+	-del /q $(T)fields$(E) $(T)fields.s $(T)fields.2 $(T)fields.1
+	-del /q $(T)front$(E) $(T)front.s $(T)front.2 $(T)front.1
+	-del /q $(T)incr$(E) $(T)incr.s $(T)incr.2 $(T)incr.1
+	-del /q $(T)init$(E) $(T)init.s $(T)init.2 $(T)init.1
+	-del /q $(T)limits$(E) $(T)limits.s $(T)limits.2 $(T)limits.1
+	-del /q $(T)paranoia$(E) $(T)paranoia.s $(T)paranoia.2 $(T)paranoia.1
+	-del /q $(T)sort$(E) $(T)sort.s $(T)sort.2 $(T)sort.1
+	-del /q $(T)spill$(E) $(T)spill.s $(T)spill.2 $(T)spill.1
+	-del /q $(T)stdarg$(E) $(T)stdarg.s $(T)stdarg.2 $(T)stdarg.1
+	-del /q $(T)struct$(E) $(T)struct.s $(T)struct.2 $(T)struct.1
+	-del /q $(T)switch$(E) $(T)switch.s $(T)switch.2 $(T)switch.1
+	-del /q $(T)wf1$(E) $(T)wf1.s $(T)wf1.2 $(T)wf1.1
+	-del /q $(T)yacc$(E) $(T)yacc.s $(T)yacc.2 $(T)yacc.1
+
+clean::		testclean
+		-del /q $(B)*$(O)
+		-del /q $(B)dagcheck.c $(B)alpha.c $(B)mips.c $(B)x86.c $(B)sparc.c $(B)x86linux.c
+		-del /q $(BINDIR)rcc1$(E) $(BINDIR)rcc1$(E) $(BINDIR)1rcc$(E) $(BINDIR)2rcc$(E)
+		-del /q $(B)*.ilk
+		-del /q $(B)*.cfg
+
+clobber::	clean
+		-del /q $(BINDIR)rcc$(E) $(BINDIR)lburg$(E) $(BINDIR)cpp$(E) $(BINDIR)lcc$(E) $(BINDIR)cp$(E) $(BINDIR)bprint$(E) $(BINDIR)ops$(E) $(LIBDIR)*$(A)
+		-del /q $(BINDIR)*.pdb $(BINDIR)*.pch
+
+RCCSRCS=src/alloc.c \
+	src/bind.c \
+	src/dag.c \
+	src/decl.c \
+	src/enode.c \
+	src/error.c \
+	src/expr.c \
+	src/event.c \
+	src/init.c \
+	src/inits.c \
+	src/input.c \
+	src/lex.c \
+	src/list.c \
+	src/main.c \
+	src/output.c \
+	src/prof.c \
+	src/profio.c \
+	src/simp.c \
+	src/stmt.c \
+	src/string.c \
+	src/sym.c \
+	src/trace.c \
+	src/tree.c \
+	src/types.c \
+	src/null.c \
+	src/symbolic.c \
+	src/bytecode.c \
+	src/gen.c \
+	src/stab.c \
+	$(B)dagcheck.c \
+	$(B)alpha.c \
+	$(B)mips.c \
+	$(B)sparc.c \
+	$(B)x86linux.c \
+	$(B)x86.c
+
+# C=$(BINDIR)lcc$(E) -A -d0.6 -I$(P)src -I$(BUILDDIR)
+C=$(BINDIR)lcc$(E)  -d0.6 -I$(P)src -I$(BUILDDIR) -v
+C1=$(BINDIR)lcc1$(E) -d0.6 -I$(P)src -I$(BUILDDIR) -v
+
+triple: lcc1 $(BINDIR)lcc1.cfg $(BINDIR)1rcc$(E) $(BINDIR)2rcc$(E)
+	-fc /b $(BINDIR)1rcc$(E) $(BINDIR)2rcc$(E)
+
+lcc1:
+	copy $(BINDIR)lcc.exe $(BINDIR)lcc1.exe
+
+$(BINDIR)lcc1.cfg:
+	echo	cpp=$$0\cpp -i$$0\..\include\x86\Win32\_lcc_with_vc.h $$1 $$2 $$3	>$(BINDIR)lcc1.cfg
+	echo	inc=-I$$0\..\include\x86\win32 -I"$(VCDIR)\include"	>>$(BINDIR)lcc1.cfg
+	echo	com=$$0\1rcc.exe -target=x86/win32 $$1 $$2 $$3	>>$(BINDIR)lcc1.cfg
+	echo	asm=ml.exe -nologo -c -Cp -coff -Fo$$3 $$1 $$2	>>$(BINDIR)lcc1.cfg
+	echo	lnk=link.exe -nologo -nodefaultlib -subsystem:console -entry:mainCRTStartup $$2 -OUT:$$3 $$1 $$0\..\lib\liblcc.lib $(CCLIBTYPELIB) oldnames.lib kernel32.lib user32.lib	>>$(BINDIR)lcc1.cfg
+
+$(BINDIR)1rcc$(E):	$(BINDIR)rcc$(E) $(BINDIR)lcc$(E) $(BINDIR)cpp$(E)
+		$(C) -o $@ $(RCCSRCS)
+
+$(BINDIR)2rcc$(E):	$(BINDIR)1rcc$(E)
+		$(C1) -o $@ $(RCCSRCS)
