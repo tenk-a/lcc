@@ -10,7 +10,11 @@ extern char	*objname;
 void
 doinclude(Tokenrow *trp)
 {
+  #if 1 /*@@@*/
+	char fname[PATH_BUF_SIZE], iname[PATH_BUF_SIZE];
+  #else
 	char fname[256], iname[256];
+  #endif
 	Includelist *ip;
 	int angled, len, i;
 	FILE *fd;

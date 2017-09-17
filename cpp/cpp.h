@@ -11,6 +11,11 @@
 #ifndef NULL
 #define NULL	0
 #endif
+#ifdef PATH_MAX	/*@@@*/
+#define PATH_BUF_SIZE	PATH_MAX
+#else
+#define PATH_BUF_SIZE	1024
+#endif
 
 #ifndef __alpha
 typedef unsigned char uchar;
