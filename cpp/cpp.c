@@ -5,7 +5,11 @@
 #include <stdarg.h>
 #include "cpp.h"
 
+#if 1	/*@@@*/
+#define	OUTS	0x20000
+#else
 #define	OUTS	16384
+#endif
 char	outbuf[OUTS];
 char	*out_p = outbuf;
 Source	*cursource;
