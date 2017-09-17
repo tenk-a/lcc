@@ -1,0 +1,24 @@
+lcc v4.2 付属 README ファイルの適当訳。Readme.1st.jp も参照。
+------------------------------------------------------------------------
+これらは lcc version 4.2 の配布物(ディストリビューション)です。
+
+lcc version 3.x は書籍 "A Retargetable C Compiler:Design and Implementation"
+(Addison-Wesley, 1995, ISBN 0-8053-1670-1) で解説していますが、
+lcc version 3.x と 4.x とでは重大な違いがあり、特に中間コードが違います。
+
+doc/4.html に違いをまとめています。
+
+version4.2 は LCC の以前のバージョンと互換性がありません。
+この配布物を 3.x の配布物に上書きしないでください。
+
+前回のリリース以降の変更については LOG ファイルにあります。
+
+どのような条件で lcc を 使用・複製・改造・配布できるかについては
+CPYRIGHT ファイルで説明しています。
+
+配布物とインストール手順についての詳細は doc/install.html にあります。
+
+
+Chris Fraser / cwfraser@microsoft.com
+David Hanson / drh@microsoft.com
+$Revision: 2.6 $ $Date: 2001/05/01 22:01:31 $

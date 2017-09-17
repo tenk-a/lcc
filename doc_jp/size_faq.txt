@@ -1,0 +1,143 @@
+よくある質問
+
+Q. LCCソースリポジトリがありますか？
+A.はい、gitリポジトリは http://github.com/drh/lcc でホストされています。コマンド
+
+    git clone git clone git://github.com/drh/lcc.git
+
+で lcc ディレクトリのクローンが取れます。
+
+Q. LCCソースツリーは、Subversionリ​​ポジトリで利用できますか？
+A.いいえ; drh.svnrepository.comでホスト古いSubversionリポジトリは、
+2010年12月に上記のGitリポジトリに移行されました。
+
+Q. LCCソースツリーは、匿名CVSを経由して利用できますか？
+A.はい、しかし、CVSリポジトリは現在、上記のGitリポジトリを支持して
+凍結されています。 CVSリポジトリはcvs.cs.princeton.eduでホストされています。コマンド
+
+    cvs -d :ext:anon-lcc@cvs.cs.princeton.edu:/cvs co -d lcc .
+
+ディレクトリLCCを作成し、ソースツリーから、それを移入。このコマンドは、コマンドに相当します
+
+    mkdir lcc
+    cd lcc
+    cvs -d :ext:anon-lcc@cvs.cs.princeton.edu:/cvs co .
+
+パスワードの入力を求めている場合は戻り、ホームディレクトリの欠落についての診断を無視して
+ヒット。プリンストンCVSサーバの詳細については、http://cvs.cs.princeton.eduをご覧ください。
+
+Q.LCCに付属しているバックエンドは何ですか。
+A.分布はALPHA（DEC OSF / 1）、SPARC（Solarisの場合）、MIPS R3000（SGI IRIX）、
+およびX86（Windows95/98/NTおよびLinux）用のコードジェネレータが含まれています。
+
+Q.何のSunOS（SPARC）に何が起こったとDEC Ultrixの（MIPS）はLCC 4.1バックエンド？
+A.これらのバックエンドは、まだサポートされており、ディストリビューションに含まれていますが、
+テストベースライン（SPARC /Sun/ TSTとMIPS / ULTRIX / TST）とドライバサポートファイル
+（など/レベルによるとなど/ ultrix.c）がある私たちはもはや、これらのシステムへのアクセス権
+を持ってないので、4.1ディストリビューションに含まれていません。
+あなたは、4.1と4.0のドライバ·サポート·ファイルを使用することができます。
+
+Q. Linux用のX86バックエンドのバージョンはありますか？
+A.はい、LCCのバージョン4.1は、Linuxを実行しているX86をサポートしています、
+それは、RedHatの5.1とSlackwareの3.4の両方でテストされています。
+警告さ：LCCバージョン4.1は、さまざまなを使用していますが、
+LCCバージョン3.xのにマニュアルで説明すると、
+使用したものよりも類似したコード生成インタフェース（PDF 256K）
+
+Q. LCCはlong long型をサポートしていますか？
+A.はい、LCC 4.1 は long long をサポートしていますが、そのバックエンドのすべては、
+現在の32ビットのターゲット上では32ビット、64ビットのターゲット上では64ビットにと、
+long と long long は同じ表現を使用しています。
+
+ライセンスLCCまたは商業的使用のためにそれの部分について何を教えてください。
+A.は、著作権表示を参照してください。パーコピーおよび無制限使用ライセンスが利用可能です。
+詳細については、お問い合わせください
+
+    キムBoedigheimer
+    アディソンウェスリー
+    75アーリントンセント、スイート300
+    ボストン、MA 02116
+    617/848-6559 kim.boedigheimer @ pearsoned.com
+
+私はバグを報告する方法教え​​てください。
+A.は、インストール·ガイドにバグの報告を参照してください。
+
+Q.本の第一及び第二の版にタイプミスのリストがありますか？
+A.はい、第一および第二刷の正誤表を参照してください。
+
+Q.誰でもリターゲッタCコンパイラを検討している？
+A.はい、ここで4/28/95にcomp.compilersに投稿されましたレビューです。
+
+設計と実装：Q.リターゲッタCコンパイラではカバーされていないLCCの部分に任意のドキュメントはありますか？
+A.はい、ソート、その他のドキュメントのWWWページを参照してください。
+クリスフレイザー·デビッドハンソン
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------
+
+
+ FAQ
+
+Q. Is the lcc source repository available?
+A. Yes; a git repository is hosted at http://github.com/drh/lcc. The command
+
+    git clone git clone git://github.com/drh/lcc.git
+
+clones the repository in the directory lcc.  
+
+Q. Is the lcc source tree available in a Subversion repository?
+A. No; the old Subversion repository hosted at drh.svnrepository.com was migrated to the Git repository above in Dec. 2010.
+
+Q. Is the lcc source tree available via anonymous CVS?
+A. Yes, but the CVS repository is now frozen in favor of the Git repository described above. The CVS repository is hosted at cvs.cs.princeton.edu. The command
+
+    cvs -d :ext:anon-lcc@cvs.cs.princeton.edu:/cvs co -d lcc .
+
+creates the directory lcc and populates it from the source tree. This command is equivalent to the commands
+
+    mkdir lcc
+    cd lcc
+    cvs -d :ext:anon-lcc@cvs.cs.princeton.edu:/cvs co .
+
+Hit return if you're prompted for a password, and ignore diagnostics about missing home directories. Visit http://cvs.cs.princeton.edu for more information about the Princeton CVS server.
+
+Q. What backends come with lcc?
+A. The distribution includes code generators for the ALPHA (DEC OSF/1), SPARC (Solaris), MIPS R3000 (SGI Irix), and X86 (Windows 95/98/NT and Linux).
+
+Q. What happened to the SunOS (SPARC) and DEC Ultrix (MIPS) backends for lcc 4.1?
+A. These backends are still supported and are included in the distribution, but the test baselines (sparc/sun/tst and mips/ultrix/tst) and the driver support files (etc/sun.c and etc/ultrix.c) are not included in the 4.1 distribution, because we no longer have access to these systems. You can use the 4.0 driver support files with 4.1.
+
+Q. Is there a version of the X86 backend for Linux?
+A. Yes; version 4.1 of lcc supports the X86 running Linux; it's been tested on both RedHat 5.1 and Slackware 3.4. Be warned: lcc version 4.1 uses a different, but similar code generation interface (PDF 256K) than the one described in the book and used in lcc version 3.x.
+
+Q. Does lcc support the long long type?
+A. Yes, lcc 4.1 supports long long, but all of its backends currently use the same representation for long and long long, i.e., 32 bits on 32-bit targets and 64 bits on 64-bit targets.
+
+Q. What about licensing lcc or parts of it for commercial use?
+A. See the copyright notice. Per-copy and unlimited use licenses are available; for more information, contact
+
+    Kim Boedigheimer
+    Addison Wesley
+    75 Arlington St., Suite 300
+    Boston, MA 02116
+    617/848-6559 kim.boedigheimer@pearsoned.com
+
+Q. How to I report a bug?
+A. See Reporting Bugs in the installation guide.
+
+Q. Is there a list of typos in the first and second printings of the book?
+A. Yes; see the errata for the first and second printings.
+
+Q. Has anyone reviewed A Retargetable C Compiler?
+A. Yes; here is a review that was posted to comp.compilers on 4/28/95.
+
+Q. Is there any documentation on those parts of lcc that are not covered in A Retargetable C Compiler: Design and Implementation?
+A. Yes, sort of; see the additional documentation WWW page.
+Chris Fraser · David Hanson
