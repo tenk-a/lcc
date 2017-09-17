@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpp.h"
+#ifdef WIN32	/*@@@*/
+#include <ctype.h>
+#endif
 
 Includelist	includelist[NINCLUDE];
 

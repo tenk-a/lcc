@@ -47,8 +47,12 @@ extern char *stringf(const char *, ...);
 extern int suffix(char *, char *[], int);
 extern char *tempname(char *);
 
+#ifdef WIN32	/*@@@*/
+#include <io.h>
+#else
 extern int access(char *, int);
 extern int getpid(void);
+#endif
 
 extern char *cpp[], *include[], *com[], *as[],*ld[], inputs[], *suffixes[];
 extern int option(char *);
