@@ -64,6 +64,13 @@ extern int getpid(void);
 extern char *cpp[], *include[], *com[], *as[],*ld[], inputs[], *suffixes[];
 extern int option(char *);
 
+#ifdef WIN32	/*@@@*/
+extern void 		read_cfgfile( const char* );
+extern char 		lccinstdir[];
+extern unsigned 	lccinst_parent_len;
+static struct list	lccinstdir_list = { lccinstdir, &lccinstdir_list };
+#endif
+
 #if !defined(WIN32)
   #define	WIN32_REPLACE_DIRSEP(p)		(p)
 #elif defined(_MSC_VER) || defined(__LCC_WITH_VC__)
@@ -98,8 +105,12 @@ int main(int argc, char *argv[]) {
 	int i, j, nf;
 	
 	progname = argv[0];
+  #if 1 /*@@@*/
+	ac = argc + 50 + 32 * 5;	/* CFGARY_SIZE * 5 ... cpp[],include[],com[],as[],ld[] => 5 */
+  #else
 	ac = argc + 50;
-	av = alloc(ac*sizeof(char *));
+  #endif
+	av = (char**)alloc(ac*sizeof(char *));
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		signal(SIGINT, interrupt);
 	if (signal(SIGTERM, SIG_IGN) != SIG_IGN)
@@ -385,14 +396,61 @@ static int compile(char *src, char *dst) {
 /* compose - compose cmd into av substituting a, b, c for $1, $2, $3, resp. */
 static void compose(char *cmd[], List a, List b, List c) {
 	int i, j;
+  #ifdef WIN32	/*@@@*/
+	List lists[4];
+
+	lists[0] = &lccinstdir_list;	/* lcc install directory */
+	lists[1] = a;
+	lists[2] = b;
+	lists[3] = c;
+  #else
 	List lists[3];
 
 	lists[0] = a;
 	lists[1] = b;
 	lists[2] = c;
+  #endif
+
 	for (i = j = 0; cmd[i]; i++) {
-		char *s = strchr(cmd[i], '$');
+		char *cmd_i = cmd[i];	/*@@@*/
+		char *s = strchr(cmd_i, '$');
 		if (s && isdigit(s[1])) {
+		 #if 1	/*@@@*/
+			int k = s[1] - '0';
+			List lists_k;
+			if (k < 0 || k > 3) {
+				fprintf(stderr, "lcc.cfg : $[0-3], but $%c\n", s[1]);
+				exit(1);
+			}
+			lists_k = lists[k];
+			if ((b = lists_k) != NULL) {
+				unsigned l1, l2;
+				char *t;
+				b  = b->link;
+				l1 = strlen(cmd_i);
+				l2 = strlen(b->str);
+				t  = av[j++] = (char*) alloc(l1 + l2 - 1);
+				l1 = s - cmd_i;
+				memcpy(t, cmd_i, l1);
+				memcpy(t+l1, b->str, l2+1);
+				if (b == lists_k) {
+					strcpy(t+l1+l2, s + 2);
+				} else {
+					while (b != lists_k) {
+						b = b->link;
+						assert(j < ac);
+						av[j++] = b->str;
+					}
+					s += 2;
+					l1 = strlen(av[j-1]);
+					l2 = strlen(s);
+					t = (char*) alloc(l1 + l2 + 1);
+					memcpy(t, av[j-1], l1);
+					memcpy(t+l1, s, l2+1);
+					av[j-1] = t;
+				}
+			}
+		 #else
 			int k = s[1] - '0';
 			assert(k >=1 && k <= 3);
 			if (b = lists[k-1]) {
@@ -406,11 +464,12 @@ static void compose(char *cmd[], List a, List b, List c) {
 					b = b->link;
 					assert(j < ac);
 					av[j++] = b->str;
-				};
+				}
 			}
-		} else if (*cmd[i]) {
+		 #endif
+		} else if (*cmd_i) {
 			assert(j < ac);
-			av[j++] = cmd[i];
+			av[j++] = cmd_i;
 		}
 	}
 	av[j] = NULL;
@@ -619,6 +678,9 @@ static void initinputs(void) {
 	char *s = getenv("LCCINPUTS");
 	List list, b;
 
+ #ifdef WIN32
+	read_cfgfile( progname );	/*@@@*/
+ #endif
 	if (s == 0 && (s = inputs)[0] == 0)
 		s = ".";
 	if (s) {
@@ -736,16 +798,20 @@ xx(unsigned_int,4)
 		else
 #endif	
 		{
-		static char *path;
-		if (path)
-			error("-B overwrites earlier option", 0);
-		path = arg + 2;
-		if (strstr(com[1], "win32") != NULL)
-			com[0] = concat(replace(path, '/', '\\'), concat("rcc", first(suffixes[4])));
-		else
-			com[0] = concat(path, "rcc");
-		if (path[0] == 0)
-			error("missing directory in -B option", 0);
+			static char *path;
+			if (path)
+				error("-B overwrites earlier option", 0);
+			path = arg + 2;
+		 #ifdef WIN32	/*@@@*/
+			com[0] = concat(WIN32_REPLACE_DIRSEP(strsave(path)), concat("rcc", first(suffixes[4])));
+		 #else
+			if (strstr(com[1], "win32") != NULL)
+				com[0] = concat(replace(path, '/', '\\'), concat("rcc", first(suffixes[4])));
+			else
+				com[0] = concat(path, "rcc");
+		 #endif
+			if (path[0] == 0)
+				error("missing directory in -B option", 0);
 		}
 		return;
 	case 'h':
