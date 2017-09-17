@@ -38,7 +38,11 @@ struct	kwtab {
 	"__FILE__",	KFILE,		ISMAC+ISUNCHANGE,
 	"__DATE__",	KDATE,		ISMAC+ISUNCHANGE,
 	"__TIME__",	KTIME,		ISMAC+ISUNCHANGE,
+  #if 1	/*@@@*/
+	"__STDC__",	KSTDC,		ISMAC+ISUNCHANGE,
+  #else
 	"__STDC__",	KSTDC,		ISUNCHANGE,
+  #endif
 	NULL
 };
 

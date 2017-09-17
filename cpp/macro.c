@@ -508,6 +508,13 @@ builtin(Tokenrow *trp, int biname)
 		op += 8;
 		break;
 
+ #if 1	/*@@@*/
+	case KSTDC:
+		tp->type = NUMBER;
+		op = outnum(op-1, 1);
+		break;
+ #endif
+
 	default:
 		error(ERROR, "cpp botch: unknown internal macro");
 		return;
