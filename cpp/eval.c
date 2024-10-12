@@ -220,7 +220,7 @@ syntax:
 int
 evalop(struct pri pri)
 {
-	struct value v1, v2 = {0};
+    struct value v1, v2 = {0/*@@@*/};
 	long rv1, rv2;
 	int rtype, oper;
 
